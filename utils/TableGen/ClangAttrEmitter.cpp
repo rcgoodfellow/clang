@@ -1200,7 +1200,12 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
                          SpellingNamesAreCommon(Spellings);
 
     if (!ElideSpelling) {
+      // The enumerants are automatically generated based on the variety,
+      // namespace (if present) and name for each attribute spelling. However,
+      // care is taken to avoid trampling on the reserved namespace due to
+      // underscores.
       OS << "  enum Spelling {\n";
+      std::set<std::string> Uniques;
       for (std::vector<Record *>::const_iterator I = Spellings.begin(),
            E = Spellings.end(); I != E; ++I) {
         if (I != Spellings.begin())
@@ -1209,14 +1214,25 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
         std::string Variety = S.getValueAsString("Variety");
         std::string Spelling = S.getValueAsString("Name");
         std::string Namespace = "";
+        std::string EnumName = "";
 
         if (Variety == "CXX11")
           Namespace = S.getValueAsString("Namespace");
 
-        OS << "    " << Variety << "_";
+        EnumName += (Variety + "_");
         if (!Namespace.empty())
-          OS << Namespace << "_";
-        OS << Spelling;
+          EnumName += (NormalizeNameForSpellingComparison(Namespace).str() +
+                      "_");
+        EnumName += NormalizeNameForSpellingComparison(Spelling);
+
+        // Since we have been stripping underscores to avoid trampling on the
+        // reserved namespace, we may have inadvertently created duplicate
+        // enumerant names. Unique the name if required.
+        while (Uniques.find(EnumName) != Uniques.end())
+          EnumName += "_alternate";
+        Uniques.insert(EnumName);
+
+        OS << "    " << EnumName;
       }
       OS << "\n  };\n\n";
     }
@@ -1336,6 +1352,9 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     bool LateParsed = R.getValueAsBit("LateParsed");
     OS << "  virtual bool isLateParsed() const { return "
        << LateParsed << "; }\n";
+
+    if (R.getValueAsBit("DuplicatesAllowedWhileMerging"))
+      OS << "  virtual bool duplicatesAllowed() const { return true; }\n\n";
 
     OS << "};\n\n";
   }
@@ -1990,6 +2009,7 @@ static std::string CalculateDiagnostic(const Record &S) {
 
     uint32_t V = StringSwitch<uint32_t>(Name)
                    .Case("Function", Func)
+                   .Case("FunctionDefinition", Func)
                    .Case("Var", Var)
                    .Case("ObjCMethod", ObjCMethod)
                    .Case("ParmVar", Param)
@@ -2065,6 +2085,8 @@ static std::string GetSubjectWithSuffix(const Record *R) {
   std::string B = R->getName();
   if (B == "DeclBase")
     return "Decl";
+  else if (B == "FunctionDefinition")
+    return "FunctionDecl";
   return B + "Decl";
 }
 static std::string GenerateCustomAppertainsTo(const Record &Subject,
@@ -2295,6 +2317,24 @@ static std::string GenerateTargetRequirements(const Record &Attr,
   return FnName;
 }
 
+static bool CanAppearOnFuncDef(const Record &Attr) {
+  // Look at the subjects this function appertains to; if a FunctionDefinition
+  // appears in the list, then this attribute can appear on a function
+  // definition.
+  if (Attr.isValueUnset("Subjects"))
+    return false;
+
+  std::vector<Record *> Subjects = Attr.getValueAsDef("Subjects")->
+                                        getValueAsListOfDefs("Subjects");
+  for (std::vector<Record *>::const_iterator I = Subjects.begin(),
+       E = Subjects.end(); I != E; ++I) {
+    const Record &Subject = **I;
+    if (Subject.getName() == "FunctionDefinition")
+      return true;
+  }
+  return false;
+}
+
 /// Emits the parsed attribute helpers
 void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
   emitSourceFileHeader("Parsed attribute helpers", OS);
@@ -2321,7 +2361,7 @@ void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     // because it is a target-specific attribute that appears multiple times.
     // It would be beneficial to test whether the duplicates are "similar
     // enough" to each other to not cause problems. For instance, check that
-    // the spellings are identicial, and custom parsing rules match, etc.
+    // the spellings are identical, and custom parsing rules match, etc.
 
     // We need to generate struct instances based off ParsedAttrInfo from
     // AttributeList.cpp.
@@ -2330,6 +2370,7 @@ void EmitClangAttrParsedAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     SS << ", " << I->second->getValueAsBit("HasCustomParsing");
     SS << ", " << I->second->isSubClassOf("TargetSpecificAttr");
     SS << ", " << I->second->isSubClassOf("TypeAttr");
+    SS << ", " << CanAppearOnFuncDef(*I->second);
     SS << ", " << GenerateAppertainsTo(*I->second, OS);
     SS << ", " << GenerateLangOptRequirements(*I->second, OS);
     SS << ", " << GenerateTargetRequirements(*I->second, Dupes, OS);

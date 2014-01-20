@@ -2262,8 +2262,13 @@ NetBSD::GetCXXStdlibType(const ArgList &Args) const {
   unsigned Major, Minor, Micro;
   getTriple().getOSVersion(Major, Minor, Micro);
   if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 23) || Major == 0) {
-    if (getArch() == llvm::Triple::x86 || getArch() == llvm::Triple::x86_64)
+    switch (getArch()) {
+    case llvm::Triple::x86:
+    case llvm::Triple::x86_64:
       return ToolChain::CST_Libcxx;
+    default:
+      break;
+    }
   }
   return ToolChain::CST_Libstdcxx;
 }
@@ -2940,9 +2945,24 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
   // Check if libc++ has been enabled and provide its include paths if so.
   if (GetCXXStdlibType(DriverArgs) == ToolChain::CST_Libcxx) {
-    // libc++ is always installed at a fixed path on Linux currently.
-    addSystemInclude(DriverArgs, CC1Args,
-                     getDriver().SysRoot + "/usr/include/c++/v1");
+    const std::string LibCXXIncludePathCandidates[] = {
+      // The primary location is within the Clang installation.
+      // FIXME: We shouldn't hard code 'v1' here to make Clang future proof to
+      // newer ABI versions.
+      getDriver().Dir + "/../include/c++/v1",
+
+      // We also check the system as for a long time this is the only place Clang looked.
+      // FIXME: We should really remove this. It doesn't make any sense.
+      getDriver().SysRoot + "/usr/include/c++/v1"
+    };
+    for (unsigned i = 0; i < llvm::array_lengthof(LibCXXIncludePathCandidates);
+         ++i) {
+      if (!llvm::sys::fs::exists(LibCXXIncludePathCandidates[i]))
+        continue;
+      // Add the first candidate that exists.
+      addSystemInclude(DriverArgs, CC1Args, LibCXXIncludePathCandidates[i]);
+      break;
+    }
     return;
   }
 
@@ -2966,7 +2986,7 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
                                MIPSABIDirSuffix, DriverArgs, CC1Args))
     return;
 
-  const std::string IncludePathCandidates[] = {
+  const std::string LibStdCXXIncludePathCandidates[] = {
     // Gentoo is weird and places its headers inside the GCC install, so if the
     // first attempt to find the headers fails, try these patterns.
     InstallDir.str() + "/include/g++-v" + Version.MajorStr + "." +
@@ -2979,8 +2999,9 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
     LibDir.str() + "/../include/c++",
   };
 
-  for (unsigned i = 0; i < llvm::array_lengthof(IncludePathCandidates); ++i) {
-    if (addLibStdCXXIncludePaths(IncludePathCandidates[i],
+  for (unsigned i = 0; i < llvm::array_lengthof(LibStdCXXIncludePathCandidates);
+       ++i) {
+    if (addLibStdCXXIncludePaths(LibStdCXXIncludePathCandidates[i],
                                  TripleStr + MIPSABIDirSuffix + BiarchSuffix,
                                  DriverArgs, CC1Args))
       break;
