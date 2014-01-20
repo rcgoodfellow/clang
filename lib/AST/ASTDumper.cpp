@@ -205,6 +205,7 @@ namespace  {
 
     // C++ Decls
     void VisitNamespaceDecl(const NamespaceDecl *D);
+    void VisitCXXModuleDecl(const CXXModuleDecl *D);
     void VisitUsingDirectiveDecl(const UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(const NamespaceAliasDecl *D);
     void VisitTypeAliasDecl(const TypeAliasDecl *D);
@@ -988,6 +989,9 @@ void ASTDumper::VisitNamespaceDecl(const NamespaceDecl *D) {
     OS << " inline";
   if (!D->isOriginalNamespace())
     dumpDeclRef(D->getOriginalNamespace(), "original");
+}
+void ASTDumper::VisitCXXModuleDecl(const CXXModuleDecl *D) {
+  dumpName(D);
 }
 
 void ASTDumper::VisitUsingDirectiveDecl(const UsingDirectiveDecl *D) {

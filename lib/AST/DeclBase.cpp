@@ -553,6 +553,9 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case NamespaceAlias:
       return IDNS_Namespace;
 
+    case CXXModule:
+      return IDNS_Module;
+
     case FunctionTemplate:
     case VarTemplate:
       return IDNS_Ordinary;

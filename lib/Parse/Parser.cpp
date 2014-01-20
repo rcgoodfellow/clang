@@ -593,6 +593,14 @@ bool Parser::ParseTopLevelDecl(DeclGroupPtrTy &Result) {
   // processing
   if (PP.isIncrementalProcessingEnabled() && Tok.is(tok::eof))
     ConsumeToken();
+  
+  if(this->PP.getLangOpts().CPlusPlus1y && this->PP.getLangOpts().Modules) {
+    SourceLocation DeclEnd;
+    Decl *ModuleDecl = 
+      ParseCXXModuleDeclaration(Declarator::FileContext, DeclEnd);
+    Result = Actions.ConvertDeclToDeclGroup(ModuleDecl, 0);
+    return true;
+  }
 
   Result = DeclGroupPtrTy();
   switch (Tok.getKind()) {

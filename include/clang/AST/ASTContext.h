@@ -372,8 +372,10 @@ private:
   
   ImportDecl *FirstLocalImport;
   ImportDecl *LastLocalImport;
-  
-  TranslationUnitDecl *TUDecl;
+ 
+  //No more translation units in module land
+  //TranslationUnitDecl *TUDecl;
+  CXXModuleDecl ModDecl;
 
   /// \brief The associated SourceManager object.a
   SourceManager &SourceMgr;

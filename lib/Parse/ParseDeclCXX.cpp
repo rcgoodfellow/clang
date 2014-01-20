@@ -270,6 +270,81 @@ Decl *Parser::ParseNamespaceAlias(SourceLocation NamespaceLoc,
                                         SS, IdentLoc, Ident);
 }
 
+/// ParseModule - We know that the current token is a module
+/// 
+///   module-specification: [C++1y TBD]
+///     'module' identifier ':'
+///
+Decl *Parser::ParseCXXModuleDeclaration(unsigned Context, 
+                                        SourceLocation &DeclEnd,
+                                        SourceLocation InlineLoc)
+{
+  assert(Tok.is(tok::kw_module) && "Not a module!");
+
+  SourceLocation ModuleLoc = ConsumeToken(); //eat 'module' token
+  IdentifierInfo *II{nullptr};
+  SourceLocation ILoc, ModStart;
+ 
+  //FIXME: Use these for nested modules, e.g. std.string
+  std::vector<SourceLocation> ExtraIdentLoc;
+  std::vector<IdentifierInfo*> ExtraIdent;
+  std::vector<SourceLocation> ExtraModNamespaceLoc;
+  
+  ParsedAttributes attrs(AttrFactory);
+
+  if(Tok.is(tok::identifier)) {
+    II = Tok.getIdentifierInfo();
+    ILoc = ConsumeToken(); //eat identifier
+  } else {
+    Diag(Tok, diag::err_expected) << tok::identifier;
+    return nullptr;
+  }
+  if(Tok.is(tok::colon)) {
+    ModStart = ConsumeToken(); //eat colon
+    
+    //inject an encapsulating namespce using II as the identifier
+
+    ParseScope ModuleNamespaceScope(this, Scope::DeclScope);
+
+    /*
+    Decl *NSDecl = 
+      Actions.ActOnStartNamespaceDef(getCurScope(), InlineLoc, ModuleLoc,
+                                     ILoc, II, ModStart, attrs.getList());
+    */
+    Decl *ModDecl = 
+      Actions.ActOnStartModuleDef(getCurScope(), InlineLoc, ModuleLoc, ILoc,
+                                  II, ModStart, attrs.getList());
+  
+    PrettyDeclStackTraceEntry CrashInfo(Actions, ModDecl, ModuleLoc,
+                                      "parsing module");
+
+    ParseInnerModule();
+
+    ModuleNamespaceScope.Exit();
+
+    //Actions.ActOnFinishNamespaceDef(NSDecl, SourceLocation());
+    Actions.ActOnFinishModuleDef(ModDecl, SourceLocation());
+
+    return ModDecl;
+
+  } else {
+    Diag(Tok, diag::err_expected) << tok::colon;
+    return nullptr;
+  }
+
+}
+
+/// ParseInnerModule
+void Parser::ParseInnerModule() {
+
+  while (!isEofOrEom()) {
+      ParsedAttributesWithRange attrs(AttrFactory);
+      MaybeParseCXX11Attributes(attrs);
+      MaybeParseMicrosoftAttributes(attrs);
+      ParseExternalDeclaration(attrs);
+    }
+}
+
 /// ParseLinkage - We know that the current token is a string_literal
 /// and just before that, that extern was seen.
 ///

@@ -37,6 +37,7 @@ class LinkageSpecDecl;
 class Module;
 class NamedDecl;
 class NamespaceDecl;
+class CXXModuleDecl;
 class ObjCCategoryDecl;
 class ObjCCategoryImplDecl;
 class ObjCContainerDecl;
@@ -164,7 +165,11 @@ public:
     /// This declaration is a function-local extern declaration of a
     /// variable or function. This may also be IDNS_Ordinary if it
     /// has been declared outside any function.
-    IDNS_LocalExtern         = 0x0800
+    IDNS_LocalExtern         = 0x0800,
+
+    /// This declaration is a module
+    IDNS_Module              = 0x1000
+
   };
 
   /// ObjCDeclQualifier - 'Qualifiers' written next to the return and
@@ -994,6 +999,7 @@ typedef ArrayRef<NamedDecl *> DeclContextLookupConstResult;
 ///   ObjCContainerDecl
 ///   LinkageSpecDecl
 ///   BlockDecl
+///   CXXModuleDecl
 ///
 class DeclContext {
   /// DeclKind - This indicates which class this is.

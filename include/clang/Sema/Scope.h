@@ -94,7 +94,11 @@ public:
     FnTryCatchScope = 0x4000,
 
     /// \brief This is the scope of OpenMP executable directive
-    OpenMPDirectiveScope = 0x8000
+    OpenMPDirectiveScope = 0x8000,
+
+    /// \brief This is the scope that corresponds to a module
+    ModuleScope = 0x10000
+
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit

@@ -2185,6 +2185,12 @@ private:
   Decl *ParseNamespaceAlias(SourceLocation NamespaceLoc,
                             SourceLocation AliasLoc, IdentifierInfo *Alias,
                             SourceLocation &DeclEnd);
+  //===--------------------------------------------------------------------===//
+  // C++ ??: Modules
+  Decl *ParseCXXModuleDeclaration(unsigned Context, SourceLocation &DeclEnd,
+                                  SourceLocation InlineLoc = SourceLocation());
+
+  void ParseInnerModule();
 
   //===--------------------------------------------------------------------===//
   // C++ 9: classes [class] and C structs/unions.

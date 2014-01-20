@@ -94,17 +94,18 @@ namespace {
     KEYC99 = 0x1,
     KEYCXX = 0x2,
     KEYCXX11 = 0x4,
-    KEYGNU = 0x8,
-    KEYMS = 0x10,
-    BOOLSUPPORT = 0x20,
-    KEYALTIVEC = 0x40,
-    KEYNOCXX = 0x80,
-    KEYBORLAND = 0x100,
-    KEYOPENCL = 0x200,
-    KEYC11 = 0x400,
-    KEYARC = 0x800,
-    KEYNOMS = 0x01000,
-    WCHARSUPPORT = 0x02000,
+    KEYCXX1Y = 0x8,
+    KEYGNU = 0x10,
+    KEYMS = 0x20,
+    BOOLSUPPORT = 0x40,
+    KEYALTIVEC = 0x80,
+    KEYNOCXX = 0x100,
+    KEYBORLAND = 0x200,
+    KEYOPENCL = 0x400,
+    KEYC11 = 0x800,
+    KEYARC = 0x01000,
+    KEYNOMS = 0x02000,
+    WCHARSUPPORT = 0x04000,
     KEYALL = (0xffff & ~KEYNOMS) // Because KEYNOMS is used to exclude.
   };
 }
@@ -124,6 +125,7 @@ static void AddKeyword(StringRef Keyword,
   if (Flags == KEYALL) AddResult = 2;
   else if (LangOpts.CPlusPlus && (Flags & KEYCXX)) AddResult = 2;
   else if (LangOpts.CPlusPlus11 && (Flags & KEYCXX11)) AddResult = 2;
+  else if (LangOpts.CPlusPlus1y && (Flags & KEYCXX1Y)) AddResult = 2;
   else if (LangOpts.C99 && (Flags & KEYC99)) AddResult = 2;
   else if (LangOpts.GNUKeywords && (Flags & KEYGNU)) AddResult = 1;
   else if (LangOpts.MicrosoftExt && (Flags & KEYMS)) AddResult = 1;
@@ -138,7 +140,9 @@ static void AddKeyword(StringRef Keyword,
   // in non-arc mode.
   else if (LangOpts.ObjC2 && (Flags & KEYARC)) AddResult = 2;
   else if (LangOpts.CPlusPlus && (Flags & KEYCXX11)) AddResult = 3;
-
+  else if ((LangOpts.CPlusPlus || LangOpts.CPlusPlus11) && (Flags & KEYCXX1Y))
+      AddResult = 3;
+    
   // Don't add this keyword under MicrosoftMode.
   if (LangOpts.MicrosoftMode && (Flags & KEYNOMS))
      return;

@@ -221,6 +221,7 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //              implementation namespace
 //   KEYNOCXX - This is a keyword in every non-C++ dialect.
 //   KEYCXX11 - This is a C++ keyword introduced to C++ in C++11
+//   KEYCXX1Y - This is a C++ keyword introduced to C++ in C++1y
 //   KEYGNU   - This is a keyword if GNU extensions are enabled
 //   KEYMS    - This is a keyword if Microsoft extensions are enabled
 //   KEYNOMS  - This is a keyword that must never be enabled under
@@ -336,6 +337,10 @@ KEYWORD(noexcept                    , KEYCXX11)
 KEYWORD(nullptr                     , KEYCXX11)
 KEYWORD(static_assert               , KEYCXX11)
 KEYWORD(thread_local                , KEYCXX11)
+
+// C++1y module keywords
+KEYWORD(module                      , KEYCXX1Y)
+KEYWORD(import                      , KEYCXX1Y)
 
 // GNU Extensions (in impl-reserved namespace)
 KEYWORD(_Decimal32                  , KEYALL)

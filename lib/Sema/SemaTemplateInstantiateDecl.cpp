@@ -187,6 +187,11 @@ TemplateDeclInstantiator::VisitNamespaceDecl(NamespaceDecl *D) {
 }
 
 Decl *
+TemplateDeclInstantiator::VisitCXXModuleDecl(CXXModuleDecl *D) {
+  llvm_unreachable("Modules cannot be instantiated");
+}
+
+Decl *
 TemplateDeclInstantiator::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
   NamespaceAliasDecl *Inst
     = NamespaceAliasDecl::Create(SemaRef.Context, Owner,

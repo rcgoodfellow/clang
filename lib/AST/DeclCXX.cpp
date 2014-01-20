@@ -1986,6 +1986,54 @@ NamespaceAliasDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
                                         SourceLocation(), 0);
 }
 
+CXXModuleDecl::CXXModuleDecl(DeclContext *DC, 
+                             SourceLocation StartLoc, SourceLocation EndLoc,
+                             SourceLocation IdLoc, IdentifierInfo *Id,
+                             CXXModuleDecl *PrevDecl)
+  : NamedDecl(CXXModule, DC, IdLoc, Id),
+    DeclContext(CXXModule),
+    LocStart(StartLoc),
+    LocEnd()
+{
+  setPreviousDecl(PrevDecl);
+}
+
+CXXModuleDecl*
+CXXModuleDecl::Create(ASTContext &C, DeclContext *DC,
+                      SourceLocation StartLoc, SourceLocation EndLoc,
+                      SourceLocation IdLoc,
+                      IdentifierInfo *Id,
+                      CXXModuleDecl *PrevDecl)
+{
+  return new (C, DC) CXXModuleDecl(DC, StartLoc, EndLoc, IdLoc, Id, PrevDecl);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void UsingShadowDecl::anchor() { }
 
 UsingShadowDecl *

@@ -3635,6 +3635,15 @@ public:
                                AttributeList *AttrList);
   void ActOnFinishNamespaceDef(Decl *Dcl, SourceLocation RBrace);
 
+  //Act on C++ modules
+  Decl *ActOnStartModuleDef(Scope *S, SourceLocation InlineLoc,
+                            SourceLocation ModuleLoc,
+                            SourceLocation IdentLoc,
+                            IdentifierInfo *Ident,
+                            SourceLocation ColonLoc,
+                            AttributeList *AttrList);
+  void ActOnFinishModuleDef(Decl *Dcl, SourceLocation End);
+
   NamespaceDecl *getStdNamespace() const;
   NamespaceDecl *getOrCreateStdNamespace();
 

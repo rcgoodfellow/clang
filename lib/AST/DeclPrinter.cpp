@@ -62,6 +62,7 @@ namespace {
     void VisitImportDecl(ImportDecl *D);
     void VisitStaticAssertDecl(StaticAssertDecl *D);
     void VisitNamespaceDecl(NamespaceDecl *D);
+    void VisitCXXModuleDecl(CXXModuleDecl *D);
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitCXXRecordDecl(CXXRecordDecl *D);
@@ -716,6 +717,11 @@ void DeclPrinter::VisitNamespaceDecl(NamespaceDecl *D) {
   if (D->isInline())
     Out << "inline ";
   Out << "namespace " << *D << " {\n";
+  VisitDeclContext(D);
+  Indent() << "}";
+}
+void DeclPrinter::VisitCXXModuleDecl(CXXModuleDecl *D) {
+  Out << "module " << *D << " {\n";
   VisitDeclContext(D);
   Indent() << "}";
 }

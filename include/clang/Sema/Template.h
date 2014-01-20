@@ -399,6 +399,7 @@ namespace clang {
     Decl *Visit ## DERIVED ## Decl(DERIVED ## Decl *D);
 #define ABSTRACT_DECL(DECL)
 
+
 // Decls which never appear inside a class or function.
 #define OBJCCONTAINER(DERIVED, BASE)
 #define FILESCOPEASM(DERIVED, BASE)
@@ -417,6 +418,8 @@ namespace clang {
 #define IMPLICITPARAM(DERIVED, BASE)
 
 #include "clang/AST/DeclNodes.inc"
+    
+    //int ShitMuffinTacos();
 
     // A few supplemental visitor functions.
     Decl *VisitCXXMethodDecl(CXXMethodDecl *D,

@@ -35,6 +35,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   switch (D.getKind()) {
   case Decl::TranslationUnit:
   case Decl::Namespace:
+  case Decl::CXXModule:
   case Decl::UnresolvedUsingTypename:
   case Decl::ClassTemplateSpecialization:
   case Decl::ClassTemplatePartialSpecialization:

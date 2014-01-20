@@ -6746,6 +6746,43 @@ void Sema::ActOnFinishNamespaceDef(Decl *Dcl, SourceLocation RBrace) {
     PopPragmaVisibility(true, RBrace);
 }
 
+Decl *Sema::ActOnStartModuleDef(Scope *ModuleScope, 
+                          SourceLocation InlineLoc,
+                          SourceLocation ModuleLoc,
+                          SourceLocation IdentLoc,
+                          IdentifierInfo *Ident,
+                          SourceLocation ColonLoc,
+                          AttributeList *AttrList) {
+
+  CXXModuleDecl *PrevMod{nullptr};
+  SourceLocation StartLoc = ColonLoc;
+  SourceLocation EndLoc;
+
+  CXXModuleDecl *Module = CXXModuleDecl::Create(Context, CurContext,
+                                               StartLoc, EndLoc, IdentLoc, 
+                                               Ident, PrevMod);
+
+  NamespaceDecl *Namespc = NamespaceDecl::Create(Context, CurContext, false,
+                                                 StartLoc, IdentLoc, Ident, 
+                                                 nullptr);
+
+  //Scope *DeclRegionScope = ModuleScope->getParent();
+  //PushOnScopeChains(Module, DeclRegionScope);
+  CurContext->addDecl(Module);
+  PushDeclContext(ModuleScope, Module);
+
+  CurContext->addDecl(Namespc);
+  PushDeclContext(ModuleScope, Namespc);
+
+  return Module;
+}
+
+void Sema::ActOnFinishModuleDef(Decl *Dcl, SourceLocation End) {
+  
+  PopDeclContext();
+
+}
+
 CXXRecordDecl *Sema::getStdBadAlloc() const {
   return cast_or_null<CXXRecordDecl>(
                                   StdBadAlloc.get(Context.getExternalSource()));

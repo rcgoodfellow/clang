@@ -47,6 +47,7 @@ public:
 
   // If the implementation chooses not to implement a certain visit
   // method, fall back to the parent.
+
 #define DECL(DERIVED, BASE) \
   RetTy Visit##DERIVED##Decl(PTR(DERIVED##Decl) D) { DISPATCH(BASE, BASE); }
 #include "clang/AST/DeclNodes.inc"

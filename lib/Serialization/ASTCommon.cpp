@@ -150,6 +150,7 @@ bool serialization::isRedeclarableDeclKind(unsigned Kind) {
   switch (static_cast<Decl::Kind>(Kind)) {
   case Decl::TranslationUnit: // Special case of a "merged" declaration.
   case Decl::Namespace:
+  case Decl::CXXModule:
   case Decl::NamespaceAlias: // FIXME: Not yet redeclarable, but will be.
   case Decl::Typedef:
   case Decl::TypeAlias:

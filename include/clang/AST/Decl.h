@@ -453,6 +453,75 @@ public:
   friend class ASTDeclWriter;
 };
 
+class CXXModuleDecl : public NamedDecl, public DeclContext,
+                      public Redeclarable<CXXModuleDecl>
+{
+
+  SourceLocation LocStart, LocEnd;
+
+  typedef Redeclarable<CXXModuleDecl> redeclarable_base;
+
+  CXXModuleDecl(DeclContext *DC, 
+                SourceLocation StartLoc, SourceLocation EndLoc,
+                SourceLocation IdLoc, 
+                IdentifierInfo *Id,
+                //A module is redeclarable, this pointer keeps track of
+                //the most previous declaration
+                CXXModuleDecl *PrevDecl
+                );
+
+  public:
+    static CXXModuleDecl *Create(ASTContext &C, DeclContext *DC,
+                                 SourceLocation StartLoc, SourceLocation EndLoc,
+                                 SourceLocation IdLoc,
+                                 IdentifierInfo *Id,
+                                 CXXModuleDecl *PrevDecl);
+
+    typedef redeclarable_base::redecl_iterator redecl_iterator;
+    using redeclarable_base::redecls_begin;
+    using redeclarable_base::redecls_end;
+    using redeclarable_base::getPreviousDecl;
+    using redeclarable_base::getMostRecentDecl;
+    using redeclarable_base::isFirstDecl;
+
+    friend class ASTDeclReader;
+    friend class ASTDeclWriter;
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /// ValueDecl - Represent the declaration of a variable (in which case it is
 /// an lvalue) a function (in which case it is a function designator) or
 /// an enum constant.

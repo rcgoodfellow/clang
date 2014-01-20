@@ -13,6 +13,7 @@ class DeclContext { }
 def TranslationUnit : Decl, DeclContext;
 def Named : Decl<1>;
   def Namespace : DDecl<Named>, DeclContext;
+  def CXXModule : DDecl<Named>, DeclContext;
   def UsingDirective : DDecl<Named>;
   def NamespaceAlias : DDecl<Named>;
   def Label : DDecl<Named>;
