@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/LangOptions.h"
 #include "clang/Basic/CharInfo.h"
+#include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -140,11 +140,9 @@ static void AddKeyword(StringRef Keyword,
   // in non-arc mode.
   else if (LangOpts.ObjC2 && (Flags & KEYARC)) AddResult = 2;
   else if (LangOpts.CPlusPlus && (Flags & KEYCXX11)) AddResult = 3;
-  else if ((LangOpts.CPlusPlus || LangOpts.CPlusPlus11) && (Flags & KEYCXX1Y))
-      AddResult = 3;
-    
-  // Don't add this keyword under MicrosoftMode.
-  if (LangOpts.MicrosoftMode && (Flags & KEYNOMS))
+
+  // Don't add this keyword under MSVCCompat.
+  if (LangOpts.MSVCCompat && (Flags & KEYNOMS))
      return;
   // Don't add this keyword if disabled in this language.
   if (AddResult == 0) return;

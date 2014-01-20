@@ -15,6 +15,7 @@
 #include "ParsePragma.h"
 #include "RAIIObjectsForParser.h"
 #include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/DeclSpec.h"
@@ -164,7 +165,7 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
     SourceLocation Loc = Tok.getLocation();
     DiagnosticBuilder DB = Diag(Loc, DiagID);
     DB << FixItHint::CreateReplacement(SourceRange(Loc),
-                                       getTokenSimpleSpelling(ExpectedTok));
+                                       getPunctuatorSpelling(ExpectedTok));
     if (DiagID == diag::err_expected)
       DB << ExpectedTok;
     else if (DiagID == diag::err_expected_after)
@@ -180,7 +181,7 @@ bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
   SourceLocation EndLoc = PP.getLocForEndOfToken(PrevTokLocation);
   const char *Spelling = 0;
   if (EndLoc.isValid())
-    Spelling = tok::getTokenSimpleSpelling(ExpectedTok);
+    Spelling = tok::getPunctuatorSpelling(ExpectedTok);
 
   DiagnosticBuilder DB =
       Spelling
@@ -246,7 +247,8 @@ void Parser::ConsumeExtraSemi(ExtraSemiKind Kind, unsigned TST) {
 
   if (Kind != AfterMemberFunctionDefinition || HadMultipleSemis)
     Diag(StartLoc, diag::ext_extra_semi)
-        << Kind << DeclSpec::getSpecifierName((DeclSpec::TST)TST)
+        << Kind << DeclSpec::getSpecifierName((DeclSpec::TST)TST,
+                                    Actions.getASTContext().getPrintingPolicy())
         << FixItHint::CreateRemoval(SourceRange(StartLoc, EndLoc));
   else
     // A single semicolon is valid after a member function definition.
@@ -938,7 +940,8 @@ Parser::ParseDeclOrFunctionDefInternal(ParsedAttributesWithRange &attrs,
 
     const char *PrevSpec = 0;
     unsigned DiagID;
-    if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec, DiagID))
+    if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec, DiagID,
+                           Actions.getASTContext().getPrintingPolicy()))
       Diag(AtLoc, DiagID) << PrevSpec;
 
     if (Tok.isObjCAtKeyword(tok::objc_protocol))
@@ -1025,9 +1028,11 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   if (getLangOpts().ImplicitInt && D.getDeclSpec().isEmpty()) {
     const char *PrevSpec;
     unsigned DiagID;
+    const PrintingPolicy &Policy = Actions.getASTContext().getPrintingPolicy();
     D.getMutableDeclSpec().SetTypeSpecType(DeclSpec::TST_int,
                                            D.getIdentifierLoc(),
-                                           PrevSpec, DiagID);
+                                           PrevSpec, DiagID,
+                                           Policy);
     D.SetRangeBegin(D.getDeclSpec().getSourceRange().getBegin());
   }
 
@@ -1218,9 +1223,8 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     // NOTE: GCC just makes this an ext-warn.  It's not clear what it does with
     // the declarations though.  It's trivial to ignore them, really hard to do
     // anything else with them.
-    if (Tok.is(tok::semi)) {
+    if (TryConsumeToken(tok::semi)) {
       Diag(DSStart, diag::err_declaration_does_not_declare_param);
-      ConsumeToken();
       continue;
     }
 
@@ -1294,12 +1298,14 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       ParseDeclarator(ParmDeclarator);
     }
 
-    if (ExpectAndConsumeSemi(diag::err_expected_semi_declaration)) {
-      // Skip to end of block or statement
-      SkipUntil(tok::semi);
-      if (Tok.is(tok::semi))
-        ConsumeToken();
-    }
+    // Consume ';' and continue parsing.
+    if (!ExpectAndConsumeSemi(diag::err_expected_semi_declaration))
+      continue;
+
+    // Otherwise recover by skipping to next semi or mandatory function body.
+    if (SkipUntil(tok::l_brace, StopAtSemi | StopBeforeMatch))
+      break;
+    TryConsumeToken(tok::semi);
   }
 
   // The actions module must verify that all arguments were declared.
@@ -1589,7 +1595,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
     // We will consume the typedef token here and put it back after we have
     // parsed the first identifier, transforming it into something more like:
     //   typename T_::D typedef D;
-    if (getLangOpts().MicrosoftMode && NextToken().is(tok::kw_typedef)) {
+    if (getLangOpts().MSVCCompat && NextToken().is(tok::kw_typedef)) {
       Token TypedefToken;
       PP.Lex(TypedefToken);
       bool Result = TryAnnotateTypeOrScopeToken(EnteringContext, NeedType);
